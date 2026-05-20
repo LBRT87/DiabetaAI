@@ -1,28 +1,6 @@
 # 🩸 DiabetaAI — Early Diabetes Risk Prediction
 
 Machine Learning application for early diabetes risk prediction using a **Random Forest Classifier** and the **PIMA Indians Diabetes Dataset**.
-
----
-
-# 📁 Project Structure
-
-```bash
-diabetes_project/
-│
-├── app.py
-├── train.py
-├── requirements.txt
-├── README.md
-│
-├── diabetes.csv
-├── model.pkl
-├── scaler.pkl
-├── imputer.pkl
-└── threshold.txt
-```
-
----
-
 # ⚙️ Project Setup
 
 ## 1. Create Virtual Environment
@@ -95,4 +73,4 @@ http://localhost:8501
 - Glenn Nielsen
 - Marcell Kurniawan
 
-BINUS University · Machine Learning · LA84
+BINUS University · Machine Learning 
