@@ -1,0 +1,247 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+:root {
+  --forest:       #3D6B35;
+  --forest-mid:   #4E8A44;
+  --forest-light: #EBF4E8;
+  --forest-xlight:#F4FAF2;
+
+  --clay:         #B84040;
+  --clay-light:   #FAEAEA;
+
+  --ink:          #111827;
+  --ink-soft:     #374151;
+  --ink-muted:    #6B7280;
+  --ink-faint:    #9CA3AF;
+
+  --canvas:       #FAFAFA;
+  --surface:      #FFFFFF;
+  --surface-soft: #F9FAFB;
+
+  --border:       #E5E7EB;
+  --border-soft:  #F3F4F6;
+
+  --shadow-xs: 0 1px 3px rgba(17,24,39,0.06);
+  --shadow-sm: 0 4px 16px rgba(17,24,39,0.07);
+  --shadow-md: 0 12px 32px rgba(17,24,39,0.09);
+  --shadow-lg: 0 24px 48px rgba(17,24,39,0.10);
+  --r-sm:  10px;
+  --r-md:  16px;
+  --r-lg:  22px;
+  --r-xl:  30px;
+  --r-full: 9999px;
+}
+
+html, body, [class*="css"] {
+  font-family: 'DM Sans', sans-serif !important;
+  color: var(--ink) !important;
+}
+
+.stApp {
+  background: var(--canvas) !important;
+}
+
+#MainMenu, footer, header { visibility: hidden; }
+
+[data-testid="stSidebar"] { display: none !important; }
+
+.block-container {
+  max-width: 1160px !important;
+  padding-top: 0 !important;
+  padding-bottom: 4rem !important;
+}
+
+.serif {
+  font-family: 'DM Serif Display', serif !important;
+}
+
+.label-caps {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--forest);
+  margin-bottom: 0.9rem;
+}
+
+.sec-head {
+  margin-bottom: 2rem;
+}
+
+.sec-head h2 {
+  font-family: 'DM Serif Display', serif !important;
+  font-size: 2rem;
+  font-style: italic;
+  color: var(--ink);
+  margin: 0 0 0.45rem;
+  line-height: 1.2;
+}
+
+.sec-head p {
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 600px;
+}
+
+hr {
+  border: none !important;
+  border-top: 1px solid var(--border) !important;
+  margin: 2rem 0 !important;
+}
+
+
+[data-testid="stForm"] {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-xl) !important;
+  padding: 2.2rem !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+label,
+[data-testid="stWidgetLabel"] p {
+  color: var(--ink) !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  letter-spacing: 0.01em !important;
+}
+
+[data-testid="stNumberInput"] input {
+  background: var(--surface-soft) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: var(--r-md) !important;
+  color: var(--ink) !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  padding: 0.78rem 1rem !important;
+  transition: border-color 0.18s, box-shadow 0.18s !important;
+}
+
+[data-testid="stNumberInput"] input:hover {
+  border-color: #9CA3AF !important;
+}
+
+[data-testid="stNumberInput"] input:focus {
+  border-color: var(--forest) !important;
+  box-shadow: 0 0 0 4px rgba(61,107,53,0.10) !important;
+  background: var(--surface) !important;
+}
+
+[data-testid="stNumberInput"] button {
+  background: transparent !important;
+  border: none !important;
+  border-radius: var(--r-sm) !important;
+  color: var(--ink-muted) !important;
+  transition: all 0.18s !important;
+}
+
+[data-testid="stNumberInput"] button:hover {
+  background: var(--border-soft) !important;
+  color: var(--ink) !important;
+}
+
+.stButton > button {
+  width: 100% !important;
+  height: 54px !important;
+  border: none !important;
+  border-radius: var(--r-lg) !important;
+  background: var(--forest) !important;
+  color: #fff !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  box-shadow: 0 8px 24px rgba(61,107,53,0.22) !important;
+  transition: all 0.2s ease !important;
+}
+
+.stButton > button:hover {
+  background: var(--forest-mid) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 14px 32px rgba(61,107,53,0.28) !important;
+}
+
+.stButton > button:active {
+  transform: translateY(0) scale(0.99) !important;
+}
+
+
+[data-testid="stMetric"] {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-lg) !important;
+  padding: 1.2rem 1rem !important;
+  box-shadow: var(--shadow-xs) !important;
+  text-align: center !important;
+}
+
+[data-testid="stMetricValue"] {
+  color: var(--forest) !important;
+  font-size: 1.65rem !important;
+  font-weight: 800 !important;
+}
+
+[data-testid="stMetricLabel"] {
+  color: var(--ink-muted) !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+[data-testid="stMetricDelta"] {
+  font-size: 0.72rem !important;
+  color: var(--forest-mid) !important;
+}
+
+
+[data-testid="stAlert"] {
+  border-radius: var(--r-md) !important;
+  border: none !important;
+}
+
+.stSuccess {
+  background: #ECFDF5 !important;
+  color: #065F46 !important;
+  border-left: 3px solid #10B981 !important;
+}
+
+.stError {
+  background: var(--clay-light) !important;
+  color: #7F1D1D !important;
+  border-left: 3px solid var(--clay) !important;
+}
+
+.stInfo {
+  background: var(--forest-xlight) !important;
+  color: var(--forest) !important;
+  border-left: 3px solid var(--forest-mid) !important;
+}
+
+.stWarning {
+  background: #FFFBEB !important;
+  color: #78350F !important;
+  border-left: 3px solid #F59E0B !important;
+}
+
+[data-testid="stDataFrame"] {
+  border-radius: var(--r-md) !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+[data-testid="stExpander"] {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-md) !important;
+  margin-bottom: 0.8rem !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--r-full); }
+::-webkit-scrollbar-track { background: transparent; }

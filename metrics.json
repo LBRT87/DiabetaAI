@@ -1,0 +1,19 @@
+{
+  "model_name": "Random Forest",
+  "threshold": 0.5,
+  "accuracy": 76.62,
+  "precision": 63.24,
+  "recall": 79.63,
+  "f1": 70.49,
+  "roc_auc": 82.67,
+  "cm": [
+    [
+      75,
+      25
+    ],
+    [
+      11,
+      43
+    ]
+  ]
+}
