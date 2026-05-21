@@ -54,8 +54,8 @@ else:
     print("Dataset found, starting training...")
 
 df = pd.read_csv(DATA_FILE)
-print(f"\n📊 Shape dataset: {df.shape}")
-print(f"   Distribusi target:\n{df['Outcome'].value_counts().to_string()}")
+print(f"\nShape dataset: {df.shape}")
+print(f"Distribusi target:\n{df['Outcome'].value_counts().to_string()}")
 
 ZERO_COLS = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
 df[ZERO_COLS] = df[ZERO_COLS].replace(0, np.nan)
@@ -66,7 +66,7 @@ y = df['Outcome']
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
-print(f"\n📂 Train: {X_train.shape[0]} samples | Test: {X_test.shape[0]} samples")
+print(f"\nTrain: {X_train.shape[0]} samples | Test: {X_test.shape[0]} samples")
 
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -101,17 +101,17 @@ best_name       = ""
 best_threshold  = 0.5
 best_metrics    = {}
 
-print("\n🔧 Memulai GridSearchCV + Threshold Tuning...\n")
+print("\nMemulai GridSearchCV + Threshold Tuning...\n")
 
 for name, (pipe, grid) in pipelines.items():
-    print(f"   Tuning {name}...")
+    print(f"Tuning {name}...")
     try:
         gs = GridSearchCV(pipe, param_grid=grid, cv=cv, scoring='f1', n_jobs=1, verbose=0)
         gs.fit(X_train, y_train)
         estimator = gs.best_estimator_
         print(f"    Best params: {gs.best_params_}")
     except Exception as e:
-        print(f"    ⚠️ GridSearch gagal ({e}), fallback ke default fit.")
+        print(f"GridSearch gagal ({e}), fallback ke default fit.")
         pipe.fit(X_train, y_train)
         estimator = pipe
 
@@ -142,8 +142,8 @@ for name, (pipe, grid) in pipelines.items():
 
 print(f"""
 {'='*52}
-  🏆 Model Terpilih   : {best_name}
-  🎯 Threshold        : {best_threshold:.2f}
+  Model Terpilih   : {best_name}
+  Threshold        : {best_threshold:.2f}
   ─────────────────────────────────────────
   Accuracy  : {best_metrics['accuracy']:.4f}  (Target > 70%)
   Precision : {best_metrics['precision']:.4f}  (Target > 75%)
@@ -175,5 +175,5 @@ metrics_out = {
 with open("metrics.json", "w") as f:
     json.dump(metrics_out, f, indent=2)
 
-print("💾 File tersimpan: model.pkl, scaler.pkl, imputer.pkl, threshold.txt, metrics.json")
-print("🚀 Sekarang jalankan: streamlit run app.py")
+print("File tersimpan: model.pkl, scaler.pkl, imputer.pkl, threshold.txt, metrics.json")
+print("Sekarang jalankan: streamlit run app.py")

@@ -1,11 +1,13 @@
 import streamlit as st
 import subprocess
 import os
+from PIL import Image
 import sys
 
+icon = Image.open("assets/Logo.png") 
 st.set_page_config(
     page_title="DiabetaAI — Diabetes Risk Prediction",
-    page_icon="🩺",
+    page_icon=icon,
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -13,7 +15,7 @@ st.set_page_config(
 MODEL_FILES = ["model.pkl", "scaler.pkl", "imputer.pkl", "metrics.json"]
 
 if not all(os.path.exists(f) for f in MODEL_FILES):
-    with st.spinner("⏳ Setting up model for first time... please wait (1-2 min)"):
+    with st.spinner("Setting up model for first time... please wait"):
         try:
             subprocess.run(
                 [sys.executable, "-m", "pip", "install",
@@ -25,7 +27,7 @@ if not all(os.path.exists(f) for f in MODEL_FILES):
                 [sys.executable, "model_training.py"],
                 capture_output=True, text=True, check=True
             )
-            st.success("✅ Model ready!")
+            st.success("Model ready!")
             st.rerun()
         except subprocess.CalledProcessError as e:
             st.error(f"Training failed: {e.stderr}")
@@ -44,10 +46,10 @@ from ui.tabs.feedback_tab import render_feedback_tab
 render_header()
 
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🔬  Risk Prediction",
-    "📊  Model Performance",
-    "📈  Data Insights",
-    "📋  User Testing",
+    "Risk Prediction",
+    "Model Performance",
+    "Data Insights",
+    "User Testing",
 ])
 
 with tab1:
