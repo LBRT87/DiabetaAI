@@ -1,3 +1,13 @@
+"""
+train.py
+========
+Script training model Machine Learning untuk Early Diabetes Risk Prediction.
+Jalankan SEKALI sebelum menjalankan app.py.
+
+Usage:
+    python train.py
+"""
+
 import pandas as pd
 import numpy as np
 import os
@@ -20,14 +30,49 @@ try:
     HAS_XGB = True
 except ImportError:
     HAS_XGB = False
-    print("XGBoost tidak ditemukan, akan di-skip. Install: pip install xgboost")
-DATA_FILE = "diabetes.csv"
+    print("⚠️  XGBoost tidak ditemukan, akan di-skip. Install: pip install xgboost")
 
+# ─────────────────────────────────────────
+#  1. Download / cek dataset
+# ─────────────────────────────────────────
+import urllib.request
+
+DATA_FILE = "diabetes.csv"
+DATA_URLS = [
+    "https://raw.githubusercontent.com/npradaschnor/Pima-Indians-Diabetes-Dataset/master/diabetes.csv",
+    "https://raw.githubusercontent.com/susanli2016/Machine-Learning-with-Python/master/diabetes.csv",
+]
+
+if not os.path.exists(DATA_FILE):
+    print("Downloading dataset...")
+    downloaded = False
+    for url in DATA_URLS:
+        try:
+            urllib.request.urlretrieve(url, DATA_FILE)
+            test = pd.read_csv(DATA_FILE)
+            if test.shape[1] == 9:
+                if 'Outcome' not in test.columns:
+                    test.columns = ['Pregnancies','Glucose','BloodPressure','SkinThickness',
+                                    'Insulin','BMI','DiabetesPedigreeFunction','Age','Outcome']
+                    test.to_csv(DATA_FILE, index=False)
+                print(f"Downloaded from: {url}")
+                downloaded = True
+                break
+        except Exception as e:
+            print(f"Failed from {url}: {e}")
+    if not downloaded:
+        print("ERROR: Could not download dataset.")
+        exit(1)
+else:
+    print("Dataset found, starting training...")
 
 df = pd.read_csv(DATA_FILE)
-print(f"\nShape dataset: {df.shape}")
+print(f"\n📊 Shape dataset: {df.shape}")
 print(f"   Distribusi target:\n{df['Outcome'].value_counts().to_string()}")
 
+# ─────────────────────────────────────────
+#  2. Preprocessing
+# ─────────────────────────────────────────
 ZERO_COLS = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
 df[ZERO_COLS] = df[ZERO_COLS].replace(0, np.nan)
 
@@ -37,10 +82,13 @@ y = df['Outcome']
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
-print(f"\n Train: {X_train.shape[0]} samples | Test: {X_test.shape[0]} samples")
+print(f"\n📂 Train: {X_train.shape[0]} samples | Test: {X_test.shape[0]} samples")
 
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
+# ─────────────────────────────────────────
+#  3. Pipeline definitions
+# ─────────────────────────────────────────
 def make_pipe(clf):
     return ImbPipeline([
         ('imputer',    SimpleImputer(strategy='median')),
@@ -66,28 +114,32 @@ if HAS_XGB:
          'classifier__learning_rate': [0.05, 0.1]},
     )
 
+# ─────────────────────────────────────────
+#  4. Training + threshold tuning
+# ─────────────────────────────────────────
 best_model      = None
 best_score      = 0.0
 best_name       = ""
 best_threshold  = 0.5
 best_metrics    = {}
 
-print("\ Memulai GridSearchCV + Threshold Tuning...\n")
+print("\n🔧 Memulai GridSearchCV + Threshold Tuning...\n")
 
 for name, (pipe, grid) in pipelines.items():
-    print(f"Tuning {name}...")
+    print(f"  ▶ Tuning {name}...")
     try:
         gs = GridSearchCV(pipe, param_grid=grid, cv=cv, scoring='f1', n_jobs=1, verbose=0)
         gs.fit(X_train, y_train)
         estimator = gs.best_estimator_
-        print(f"Best params: {gs.best_params_}")
+        print(f"    Best params: {gs.best_params_}")
     except Exception as e:
-        print(f"GridSearch gagal ({e}), fallback ke default fit.")
+        print(f"    ⚠️ GridSearch gagal ({e}), fallback ke default fit.")
         pipe.fit(X_train, y_train)
         estimator = pipe
 
     y_prob = estimator.predict_proba(X_test)[:, 1]
 
+    # Threshold sweep
     best_t, best_f1_t, best_m = 0.5, 0.0, {}
     for t in np.arange(0.20, 0.81, 0.01):
         y_pred = (y_prob >= t).astype(int)
@@ -111,10 +163,13 @@ for name, (pipe, grid) in pipelines.items():
         best_score, best_model, best_name  = best_f1_t, estimator, name
         best_threshold, best_metrics       = best_t, best_m
 
+# ─────────────────────────────────────────
+#  5. Final report
+# ─────────────────────────────────────────
 print(f"""
 {'='*52}
-  Model Terpilih   : {best_name}
-  Threshold        : {best_threshold:.2f}
+  🏆 Model Terpilih   : {best_name}
+  🎯 Threshold        : {best_threshold:.2f}
   ─────────────────────────────────────────
   Accuracy  : {best_metrics['accuracy']:.4f}  (Target > 70%)
   Precision : {best_metrics['precision']:.4f}  (Target > 75%)
@@ -126,6 +181,10 @@ print(f"""
 {best_metrics['cm']}
 {'='*52}
 """)
+
+# ─────────────────────────────────────────
+#  6. Save artifacts
+# ─────────────────────────────────────────
 import json
 
 with open("model.pkl",   "wb") as f: pickle.dump(best_model.named_steps['classifier'], f)
@@ -133,6 +192,7 @@ with open("scaler.pkl",  "wb") as f: pickle.dump(best_model.named_steps['scaler'
 with open("imputer.pkl", "wb") as f: pickle.dump(best_model.named_steps['imputer'],    f)
 with open("threshold.txt","w") as f: f.write(str(best_threshold))
 
+# Simpan metrics dinamis untuk app.py
 metrics_out = {
     "model_name": best_name,
     "threshold":  best_threshold,
@@ -146,5 +206,5 @@ metrics_out = {
 with open("metrics.json", "w") as f:
     json.dump(metrics_out, f, indent=2)
 
-print("File tersimpan: model.pkl, scaler.pkl, imputer.pkl, threshold.txt, metrics.json")
-print("Sekarang jalankan: streamlit run app.py")
+print("💾 File tersimpan: model.pkl, scaler.pkl, imputer.pkl, threshold.txt, metrics.json")
+print("🚀 Sekarang jalankan: streamlit run app.py")

@@ -1,13 +1,29 @@
 import streamlit as st
-from PIL import Image 
+import subprocess
+import os
 
-icon = Image.open("assets/Logo.png")
 st.set_page_config(
     page_title="DiabetaAI — Diabetes Risk Prediction",
-    page_icon=icon,
+    page_icon="🩺",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+# ── Auto-train jika model belum ada (untuk Streamlit Cloud) ──
+MODEL_FILES = ["model.pkl", "scaler.pkl", "imputer.pkl", "metrics.json"]
+
+if not all(os.path.exists(f) for f in MODEL_FILES):
+    with st.spinner("⏳ Setting up model for first time... please wait (1-2 min)"):
+        try:
+            result = subprocess.run(
+                ["python", "train.py"],
+                capture_output=True, text=True, check=True
+            )
+            st.success("✅ Model ready!")
+            st.rerun()
+        except subprocess.CalledProcessError as e:
+            st.error(f"Training failed: {e.stderr}")
+            st.stop()
 
 from services.css_loader import load_all_css
 load_all_css()
@@ -22,10 +38,10 @@ from ui.tabs.feedback_tab import render_feedback_tab
 render_header()
 
 tab1, tab2, tab3, tab4 = st.tabs([
-    "Risk Prediction",
-    "Model Performance",
-    "Data Insights",
-    "User Testing",
+    "🔬  Risk Prediction",
+    "📊  Model Performance",
+    "📈  Data Insights",
+    "📋  User Testing",
 ])
 
 with tab1:
