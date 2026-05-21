@@ -17,17 +17,17 @@ def render_prediction_tab():
 
         with col1:
             st.markdown('<span class="form-section-title">General Information</span>', unsafe_allow_html=True)
-            age            = st.number_input("Age (years)",              21,  120, 30,   help="Minimum age 21.")
+            age            = st.number_input("Age (years)",              1,  100, 0,   help="Patient's age in years. Note: model is optimized for ages 21 and above.")
             pregnancies    = st.number_input("Number of Pregnancies",     0,   20,  0,   help="0 is valid for nulliparous patients.")
-            glucose        = st.number_input("Glucose Level ◆ (mg/dL)",  0,  300, 120,  help="Plasma glucose 2h post OGTT. Enter 0 to auto-impute.")
-            blood_pressure = st.number_input("Blood Pressure ◆ (mm Hg)", 0,  200,  70,  help="Diastolic BP. Enter 0 to auto-impute.")
+            glucose        = st.number_input("Glucose Level ◆ (mg/dL)",  0,  300, 0,  help="Plasma glucose 2h post OGTT. Enter 0 to auto-impute.")
+            blood_pressure = st.number_input("Blood Pressure ◆ (mm Hg)", 0,  200,  0,  help="Diastolic BP. Enter 0 to auto-impute.")
 
         with col2:
             st.markdown('<span class="form-section-title">Clinical Parameters</span>', unsafe_allow_html=True)
-            bmi            = st.number_input("BMI ◆",                    0.0, 70.0, 25.0, step=0.1, help="Enter 0 to auto-impute.")
+            bmi            = st.number_input("BMI ◆",                    0.0, 70.0, 0.0, step=0.1, help="Enter 0 to auto-impute.")
             insulin        = st.number_input("Insulin ◆ (IU/mL)",        0,  1000,    0,  help="2h serum insulin. Enter 0 to auto-impute.")
             skin_thickness = st.number_input("Skin Thickness ◆ (mm)",    0,   100,    0,  help="Triceps skinfold. Enter 0 to auto-impute.")
-            dpf            = st.number_input("Diabetes Pedigree Function",0.0, 3.0, 0.47, step=0.01, help="Family history diabetes score.")
+            dpf            = st.number_input("Diabetes Pedigree Function",0.0, 3.0, 0.0, step=0.01, help="Family history diabetes score.")
 
         st.markdown("<br>", unsafe_allow_html=True)
         submitted = st.form_submit_button("Analyze Diabetes Risk →")
