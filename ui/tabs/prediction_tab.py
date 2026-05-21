@@ -17,7 +17,7 @@ def render_prediction_tab():
 
         with col1:
             st.markdown('<span class="form-section-title">General Information</span>', unsafe_allow_html=True)
-            age            = st.number_input("Age (years)",              1,  100, 0,   help="Patient's age in years. Note: model is optimized for ages 21 and above.")
+            age            = st.number_input("Age (years)",              1,  100, 1,   help="Patient's age in years. Note: model is optimized for ages 21 and above.")
             pregnancies    = st.number_input("Number of Pregnancies",     0,   20,  0,   help="0 is valid for nulliparous patients.")
             glucose        = st.number_input("Glucose Level ◆ (mg/dL)",  0,  300, 0,  help="Plasma glucose 2h post OGTT. Enter 0 to auto-impute.")
             blood_pressure = st.number_input("Blood Pressure ◆ (mm Hg)", 0,  200,  0,  help="Diastolic BP. Enter 0 to auto-impute.")
