@@ -9,17 +9,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ── Auto-train jika model belum ada (untuk Streamlit Cloud) ──
 MODEL_FILES = ["model.pkl", "scaler.pkl", "imputer.pkl", "metrics.json"]
 
 if not all(os.path.exists(f) for f in MODEL_FILES):
-    with st.spinner("⏳ Setting up model for first time... please wait (1-2 min)"):
+    with st.spinner("Setting up model for first time... please wait (1-2 min)"):
         try:
             result = subprocess.run(
-                ["python", "train.py"],
+                ["python", "model_training.py"],
                 capture_output=True, text=True, check=True
             )
-            st.success("✅ Model ready!")
+            st.success(" Model ready!")
             st.rerun()
         except subprocess.CalledProcessError as e:
             st.error(f"Training failed: {e.stderr}")
