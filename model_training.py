@@ -25,9 +25,7 @@ except ImportError:
     HAS_XGB = False
     print("XGBoost tidak tersedia, skip model ini.")
 
-# =========================
-# CONFIG
-# =========================
+
 DATA_FILE = "diabetes.csv"
 
 DATA_URLS = [
@@ -38,9 +36,7 @@ DATA_URLS = [
 ZERO_COLS = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
 
 
-# =========================
-# LOAD DATA
-# =========================
+
 def load_data():
     if not os.path.exists(DATA_FILE):
         print("Downloading dataset...")
@@ -55,9 +51,7 @@ def load_data():
     return pd.read_csv(DATA_FILE)
 
 
-# =========================
-# PREPROCESS
-# =========================
+
 def preprocess(df):
     print("\nDataset shape:", df.shape)
     print("Target distribution:\n", df["Outcome"].value_counts())
@@ -70,9 +64,7 @@ def preprocess(df):
     return train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
 
-# =========================
-# PIPELINE (tetap sama seperti lama)
-# =========================
+
 def make_pipeline(model):
     return ImbPipeline([
         ("imputer", SimpleImputer(strategy="median")),
@@ -82,9 +74,7 @@ def make_pipeline(model):
     ])
 
 
-# =========================
-# MODELS
-# =========================
+
 def get_models():
     models = {
         "Logistic Regression": (
@@ -117,9 +107,7 @@ def get_models():
     return models
 
 
-# =========================
-# THRESHOLD TUNING
-# =========================
+
 def tune_threshold(y_true, y_prob):
     best_t, best_f1, best_metrics = 0.5, 0, {}
 
@@ -143,9 +131,7 @@ def tune_threshold(y_true, y_prob):
     return best_t, best_metrics
 
 
-# =========================
-# TRAIN
-# =========================
+
 def train():
     df = load_data()
     X_train, X_test, y_train, y_test = preprocess(df)
@@ -189,9 +175,6 @@ def train():
     return best_model, best_name, best_threshold, best_metrics
 
 
-# =========================
-# SAVE (BACKWARD COMPATIBLE)
-# =========================
 def save(model, name, threshold, metrics):
     os.makedirs("artifacts", exist_ok=True)
 
@@ -225,9 +208,7 @@ def save(model, name, threshold, metrics):
     print("\nSaved successfully in /artifacts")
 
 
-# =========================
-# RUN
-# =========================
+
 if __name__ == "__main__":
     model, name, threshold, metrics = train()
 
