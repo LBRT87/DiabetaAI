@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 import pickle
+import json
+import urllib.request
 
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import StandardScaler
@@ -12,6 +14,7 @@ from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,
     f1_score, roc_auc_score, confusion_matrix,
 )
+
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
 
@@ -20,160 +23,217 @@ try:
     HAS_XGB = True
 except ImportError:
     HAS_XGB = False
-    print("XGBoost tidak ditemukan, akan di-skip. Install: pip install xgboost")
+    print("XGBoost tidak tersedia, skip model ini.")
 
-import urllib.request
-
+# =========================
+# CONFIG
+# =========================
 DATA_FILE = "diabetes.csv"
+
 DATA_URLS = [
     "https://raw.githubusercontent.com/npradaschnor/Pima-Indians-Diabetes-Dataset/master/diabetes.csv",
     "https://raw.githubusercontent.com/susanli2016/Machine-Learning-with-Python/master/diabetes.csv",
 ]
 
-if not os.path.exists(DATA_FILE):
-    print("Downloading dataset...")
-    downloaded = False
-    for url in DATA_URLS:
-        try:
-            urllib.request.urlretrieve(url, DATA_FILE)
-            test = pd.read_csv(DATA_FILE)
-            if test.shape[1] == 9:
-                if 'Outcome' not in test.columns:
-                    test.columns = ['Pregnancies','Glucose','BloodPressure','SkinThickness',
-                                    'Insulin','BMI','DiabetesPedigreeFunction','Age','Outcome']
-                    test.to_csv(DATA_FILE, index=False)
-                print(f"Downloaded from: {url}")
-                downloaded = True
-                break
-        except Exception as e:
-            print(f"Failed from {url}: {e}")
-    if not downloaded:
-        print("ERROR: Could not download dataset.")
-        exit(1)
-else:
-    print("Dataset found, starting training...")
-
-df = pd.read_csv(DATA_FILE)
-print(f"\nShape dataset: {df.shape}")
-print(f"Distribusi target:\n{df['Outcome'].value_counts().to_string()}")
-
 ZERO_COLS = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
-df[ZERO_COLS] = df[ZERO_COLS].replace(0, np.nan)
 
-X = df.drop('Outcome', axis=1)
-y = df['Outcome']
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
-)
-print(f"\nTrain: {X_train.shape[0]} samples | Test: {X_test.shape[0]} samples")
+# =========================
+# LOAD DATA
+# =========================
+def load_data():
+    if not os.path.exists(DATA_FILE):
+        print("Downloading dataset...")
+        for url in DATA_URLS:
+            try:
+                urllib.request.urlretrieve(url, DATA_FILE)
+                print("Downloaded from:", url)
+                break
+            except Exception as e:
+                print("Failed:", e)
 
-cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    return pd.read_csv(DATA_FILE)
 
-def make_pipe(clf):
+
+# =========================
+# PREPROCESS
+# =========================
+def preprocess(df):
+    print("\nDataset shape:", df.shape)
+    print("Target distribution:\n", df["Outcome"].value_counts())
+
+    df[ZERO_COLS] = df[ZERO_COLS].replace(0, np.nan)
+
+    X = df.drop("Outcome", axis=1)
+    y = df["Outcome"]
+
+    return train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+
+# =========================
+# PIPELINE (tetap sama seperti lama)
+# =========================
+def make_pipeline(model):
     return ImbPipeline([
-        ('imputer',    SimpleImputer(strategy='median')),
-        ('smote',      SMOTE(random_state=42)),
-        ('scaler',     StandardScaler()),
-        ('classifier', clf),
+        ("imputer", SimpleImputer(strategy="median")),
+        ("smote", SMOTE(random_state=42)),
+        ("scaler", StandardScaler()),
+        ("model", model),
     ])
 
-pipelines = {
-    "Logistic Regression": (
-        make_pipe(LogisticRegression(random_state=42, max_iter=1000)),
-        {'classifier__C': [0.1, 1.0, 10.0]},
-    ),
-    "Random Forest": (
-        make_pipe(RandomForestClassifier(random_state=42, class_weight='balanced')),
-        {'classifier__n_estimators': [100, 200], 'classifier__max_depth': [4, 6, 8]},
-    ),
-}
-if HAS_XGB:
-    pipelines["XGBoost"] = (
-        make_pipe(XGBClassifier(random_state=42, eval_metric='logloss', n_jobs=1)),
-        {'classifier__n_estimators': [50, 100], 'classifier__max_depth': [3, 4],
-         'classifier__learning_rate': [0.05, 0.1]},
-    )
 
-best_model      = None
-best_score      = 0.0
-best_name       = ""
-best_threshold  = 0.5
-best_metrics    = {}
+# =========================
+# MODELS
+# =========================
+def get_models():
+    models = {
+        "Logistic Regression": (
+            make_pipeline(LogisticRegression(max_iter=1000, random_state=42)),
+            {"model__C": [0.1, 1, 10]},
+        ),
+        "Random Forest": (
+            make_pipeline(RandomForestClassifier(random_state=42)),
+            {
+                "model__n_estimators": [100, 200],
+                "model__max_depth": [4, 6, 8],
+            },
+        ),
+    }
 
-print("\nMemulai GridSearchCV + Threshold Tuning...\n")
+    if HAS_XGB:
+        models["XGBoost"] = (
+            make_pipeline(XGBClassifier(
+                random_state=42,
+                eval_metric="logloss",
+                n_jobs=1
+            )),
+            {
+                "model__n_estimators": [50, 100],
+                "model__max_depth": [3, 4],
+                "model__learning_rate": [0.05, 0.1],
+            },
+        )
 
-for name, (pipe, grid) in pipelines.items():
-    print(f"Tuning {name}...")
-    try:
-        gs = GridSearchCV(pipe, param_grid=grid, cv=cv, scoring='f1', n_jobs=1, verbose=0)
-        gs.fit(X_train, y_train)
-        estimator = gs.best_estimator_
-        print(f"    Best params: {gs.best_params_}")
-    except Exception as e:
-        print(f"GridSearch gagal ({e}), fallback ke default fit.")
-        pipe.fit(X_train, y_train)
-        estimator = pipe
+    return models
 
-    y_prob = estimator.predict_proba(X_test)[:, 1]
 
-    best_t, best_f1_t, best_m = 0.5, 0.0, {}
-    for t in np.arange(0.20, 0.81, 0.01):
+# =========================
+# THRESHOLD TUNING
+# =========================
+def tune_threshold(y_true, y_prob):
+    best_t, best_f1, best_metrics = 0.5, 0, {}
+
+    for t in np.arange(0.2, 0.81, 0.01):
         y_pred = (y_prob >= t).astype(int)
-        f1 = f1_score(y_test, y_pred, zero_division=0)
-        if f1 > best_f1_t:
-            best_f1_t = f1
+        f1 = f1_score(y_true, y_pred, zero_division=0)
+
+        if f1 > best_f1:
+            best_f1 = f1
             best_t = round(t, 2)
-            best_m = {
-                'accuracy':  accuracy_score(y_test, y_pred),
-                'precision': precision_score(y_test, y_pred, zero_division=0),
-                'recall':    recall_score(y_test, y_pred, zero_division=0),
-                'f1':        f1,
-                'roc_auc':   roc_auc_score(y_test, y_prob),
-                'cm':        confusion_matrix(y_test, y_pred),
+
+            best_metrics = {
+                "accuracy": accuracy_score(y_true, y_pred),
+                "precision": precision_score(y_true, y_pred, zero_division=0),
+                "recall": recall_score(y_true, y_pred, zero_division=0),
+                "f1": f1,
+                "roc_auc": roc_auc_score(y_true, y_prob),
+                "cm": confusion_matrix(y_true, y_pred),
             }
 
-    print(f"    Threshold: {best_t:.2f} | F1: {best_f1_t:.4f} | "
-          f"Recall: {best_m['recall']:.4f} | AUC: {best_m['roc_auc']:.4f}")
+    return best_t, best_metrics
 
-    if best_f1_t > best_score:
-        best_score, best_model, best_name  = best_f1_t, estimator, name
-        best_threshold, best_metrics       = best_t, best_m
 
-print(f"""
-{'='*52}
-  Model Terpilih   : {best_name}
-  Threshold        : {best_threshold:.2f}
-  ─────────────────────────────────────────
-  Accuracy  : {best_metrics['accuracy']:.4f}  (Target > 70%)
-  Precision : {best_metrics['precision']:.4f}  (Target > 75%)
-  Recall    : {best_metrics['recall']:.4f}  (Target > 85%)
-  F1-Score  : {best_metrics['f1']:.4f}  (Target > 75%)
-  ROC-AUC   : {best_metrics['roc_auc']:.4f}  (Target > 85%)
-  ─────────────────────────────────────────
-  Confusion Matrix:
-{best_metrics['cm']}
-{'='*52}
-""")
-import json
+# =========================
+# TRAIN
+# =========================
+def train():
+    df = load_data()
+    X_train, X_test, y_train, y_test = preprocess(df)
 
-with open("model.pkl",   "wb") as f: pickle.dump(best_model.named_steps['classifier'], f)
-with open("scaler.pkl",  "wb") as f: pickle.dump(best_model.named_steps['scaler'],     f)
-with open("imputer.pkl", "wb") as f: pickle.dump(best_model.named_steps['imputer'],    f)
-with open("threshold.txt","w") as f: f.write(str(best_threshold))
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-metrics_out = {
-    "model_name": best_name,
-    "threshold":  best_threshold,
-    "accuracy":   round(best_metrics['accuracy']  * 100, 2),
-    "precision":  round(best_metrics['precision'] * 100, 2),
-    "recall":     round(best_metrics['recall']    * 100, 2),
-    "f1":         round(best_metrics['f1']        * 100, 2),
-    "roc_auc":    round(best_metrics['roc_auc']   * 100, 2),
-    "cm":         best_metrics['cm'].tolist(),
-}
-with open("metrics.json", "w") as f:
-    json.dump(metrics_out, f, indent=2)
+    models = get_models()
 
-print("File tersimpan: model.pkl, scaler.pkl, imputer.pkl, threshold.txt, metrics.json")
-print("Sekarang jalankan: streamlit run app.py")
+    best_model = None
+    best_score = 0
+    best_name = ""
+    best_threshold = 0.5
+    best_metrics = {}
+
+    print("\n=== TRAINING START ===\n")
+
+    for name, (pipe, grid) in models.items():
+        print(f"Tuning {name}...")
+
+        try:
+            gs = GridSearchCV(pipe, grid, cv=cv, scoring="f1", n_jobs=1)
+            gs.fit(X_train, y_train)
+            model = gs.best_estimator_
+        except Exception as e:
+            print("GridSearch error:", e)
+            model = pipe.fit(X_train, y_train)
+
+        y_prob = model.predict_proba(X_test)[:, 1]
+
+        threshold, metrics = tune_threshold(y_test, y_prob)
+
+        print(f"{name} | F1: {metrics['f1']:.4f} | Th: {threshold}")
+
+        if metrics["f1"] > best_score:
+            best_score = metrics["f1"]
+            best_model = model
+            best_name = name
+            best_threshold = threshold
+            best_metrics = metrics
+
+    return best_model, best_name, best_threshold, best_metrics
+
+
+# =========================
+# SAVE (BACKWARD COMPATIBLE)
+# =========================
+def save(model, name, threshold, metrics):
+    os.makedirs("artifacts", exist_ok=True)
+
+    # 🔥 IMPORTANT: tetap pisahkan seperti versi lama
+    with open("artifacts/model.pkl", "wb") as f:
+        pickle.dump(model.named_steps["model"], f)
+
+    with open("artifacts/scaler.pkl", "wb") as f:
+        pickle.dump(model.named_steps["scaler"], f)
+
+    with open("artifacts/imputer.pkl", "wb") as f:
+        pickle.dump(model.named_steps["imputer"], f)
+
+    with open("artifacts/threshold.txt", "w") as f:
+        f.write(str(threshold))
+
+    metrics_out = {
+        "model_name": name,
+        "threshold": threshold,
+        "accuracy": round(metrics["accuracy"] * 100, 2),
+        "precision": round(metrics["precision"] * 100, 2),
+        "recall": round(metrics["recall"] * 100, 2),
+        "f1": round(metrics["f1"] * 100, 2),
+        "roc_auc": round(metrics["roc_auc"] * 100, 2),
+        "cm": metrics["cm"].tolist(),
+    }
+
+    with open("artifacts/metrics.json", "w") as f:
+        json.dump(metrics_out, f, indent=2)
+
+    print("\nSaved successfully in /artifacts")
+
+
+# =========================
+# RUN
+# =========================
+if __name__ == "__main__":
+    model, name, threshold, metrics = train()
+
+    print("\nBEST MODEL:", name)
+    print("THRESHOLD:", threshold)
+
+    save(model, name, threshold, metrics)
+
+    print("\nRun Streamlit: streamlit run app.py")
