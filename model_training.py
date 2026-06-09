@@ -178,7 +178,7 @@ def train():
 def save(model, name, threshold, metrics):
     os.makedirs("artifacts", exist_ok=True)
 
-    # 🔥 IMPORTANT: tetap pisahkan seperti versi lama
+    
     with open("artifacts/model.pkl", "wb") as f:
         pickle.dump(model.named_steps["model"], f)
 
